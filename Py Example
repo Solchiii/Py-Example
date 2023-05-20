@@ -1,0 +1,52 @@
+import platform
+import subprocess
+import os
+import requests
+import win32security
+
+
+class Auth:
+    def __init__(self):
+        "main function"
+
+    def login(self, key):
+        id = self.hwid()
+        if id == None:
+            return None
+
+        request = requests.post(
+            "https://lewd.team/login",
+            headers={"Content-type": "application/json"},
+            json={"key": key, "hwid": id},
+        )
+
+        if request.status_code == 200:
+            return True
+        return False
+
+    def hwid(hwid=None):
+        if platform.system() == "Linux":
+            with open("/etc/machine-id") as f:
+                hwid = f.read()
+                return hwid
+        elif platform.system() == "Windows":
+            winuser = os.getlogin()
+            if os.name == "nt":
+                sid = win32security.LookupAccountName(None, winuser)[0]
+                hwid = win32security.ConvertSidToStringSid(sid)
+                return hwid
+        elif platform.system() == "Darwin":
+            output = subprocess.Popen(
+                "ioreg -l | grep IOPlatformSerialNumber",
+                stdout=subprocess.PIPE,
+                shell=True,
+            ).communicate()[0]
+            serial = output.decode().split("=", 1)[1].replace(" ", "")
+            hwid = serial[1:-2]
+            return hwid
+
+
+a = Auth()
+logged_in = a.login("idk")
+if logged_in != True:
+    print("Please buy from authenticated source.")
